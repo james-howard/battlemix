@@ -28,7 +28,7 @@ class Rational {
         this.numerator = numerator;
         this.denominator = denominator;
     }
-    
+
     // Create a Rational from a mixed fraction ([sign] whole + numerator / denominator).
     static fromMixed(whole, numerator, denominator) {
         const sign = whole < 0 ? -1 : 1;
@@ -45,7 +45,7 @@ class Rational {
         }
         return new Rational(sign * whole * denominator + numerator, denominator);
     }
-        
+
     // Simplify (reduce) the Rational
     simplified() {
         // Create a copy to hold the result.
@@ -61,7 +61,7 @@ class Rational {
         result.denominator /= gd;
         return result;
     }
-    
+
     // Return the components of a mixed fraction representation:
     // [sign] whole + numerator / denominator
     // as an object: {nonnegative, whole, numerator, denominator}
@@ -77,15 +77,15 @@ class Rational {
         numerator = Math.abs(numerator);
         let whole = Math.floor(numerator / denominator);
         numerator = numerator % denominator;
-        
+
         return { nonnegative, whole, numerator, denominator };
     }
-    
+
     // Returns true if this is Rational is whole number (no fractional component)
     isIntegral() {
         return (this.numerator % this.denominator) == 0;
-    }   
-    
+    }
+
     toString() {
         let { nonnegative, whole, numerator, denominator } = this.mixedFraction();
         let str = '';
@@ -103,7 +103,7 @@ class Rational {
         }
         return str;
     }
-    
+
     mathML() {
         let { nonnegative, whole, numerator, denominator } = this.mixedFraction();
         let str = ''
@@ -117,31 +117,31 @@ class Rational {
             str += `<mfrac><mn>${numerator}</mn><mn>${denominator}</mn></mfrac>`;
         return str;
     }
-    
+
     // Sum two rationals
     static add(lhs, rhs) {
         // Convert both lhs and rhs fractions to the same base so we can sum them.
         let base = lcm(lhs.denominator, rhs.denominator);
         let lhn = lhs.numerator * (base / lhs.denominator);
         let rhn = rhs.numerator * (base / rhs.denominator);
-        
+
         let result = new Rational(lhn + rhn, base);
         // Simplify to reduce the fraction.
         return result.simplified();
     }
-    
+
     // Subtract two rationals
     static subtract(lhs, rhs) {
         let base = lcm(lhs.denominator, rhs.denominator);
         let lhn = lhs.numerator * (base / lhs.denominator);
         let rhn = rhs.numerator * (base / rhs.denominator);
-        
+
         let result = new Rational(lhn - rhn, base);
         return result.simplified();
     }
-    
+
     lessThan(rhs) {
-        let t = Rational.subtract(this, rhs); 
+        let t = Rational.subtract(this, rhs);
         return t.numerator < 0;
     }
 }
@@ -149,7 +149,7 @@ class Rational {
 class BinaryOperator {
     toString() { throw 'abstract' }
     func() { throw 'abstract' }
-    
+
     mathML() { return `<mo>${this.toString()}</mo>`; }
     apply(lhs, rhs) { return this.func().apply(lhs, rhs); }
 }
@@ -173,15 +173,15 @@ class BinaryExpression {
         this.operator = operator;
         this.rhs = rhs;
     }
-    
+
     evaluate() {
         return this.operator.apply(null, [this.lhs, this.rhs]);
     }
-    
+
     toString() {
         return `${this.lhs} ${this.operator} ${this.rhs}`;
     }
-    
+
     mathML() {
         return `<math>${this.lhs.mathML()} ${this.operator.mathML()} ${this.rhs.mathML()}</math>`;
     }
@@ -201,7 +201,7 @@ function testLibrary() {
     // test negatives
     assert(Rational.fromMixed(0, 0, 1), '-', Rational.fromMixed(6, 1, 2), "-6 1 / 2");
     assert(Rational.fromMixed(0, 0, 1), '+', Rational.fromMixed(-6, -1, 2), "-6 1 / 2");
-    
+
     // test comparisons
     function assertLt(lhs, rhs) {
         const result = lhs.lessThan(rhs);
@@ -237,11 +237,11 @@ class Random {
         const seedHash = Random.cyrb128(seed);
         this.generator = Random.sfc32(...seed);
     }
-    
+
     // Internal helper, returns Simple Fast Counter PRNG
     static sfc32(a, b, c, d) {
         return function() {
-            a |= 0; b |= 0; c |= 0; d |= 0; 
+            a |= 0; b |= 0; c |= 0; d |= 0;
             var t = (a + b | 0) + d | 0;
             d = d + 1 | 0;
             a = b ^ b >>> 9;
@@ -251,7 +251,7 @@ class Random {
             return (t >>> 0) / 4294967296;
         }
     }
-    
+
     // Internal helper, returns 128 bit hash of a string, suitable for seeding PRNG.
     static cyrb128(str) {
         let h1 = 1779033703, h2 = 3144134277,
@@ -270,7 +270,7 @@ class Random {
         h1 ^= (h2 ^ h3 ^ h4), h2 ^= h1, h3 ^= h1, h4 ^= h1;
         return [h1>>>0, h2>>>0, h3>>>0, h4>>>0];
     }
-    
+
     // Generate a random seed using JavaScript's built in Math.random.
     static randomSeed() {
         // alphanumerics without confusable letters / numbers
@@ -286,12 +286,12 @@ class Random {
         }
         return seed;
     }
-    
+
     // Return a float in range 0 (inclusive) to 1 (exclusive)
     random() {
         return this.generator();
     }
-    
+
     // Return an int in range min (inclusive) to max (exclusive)
     randrange(min, max) {
         min = Math.ceil(min);
@@ -319,24 +319,26 @@ class Game {
     // Options: {
     //   width = 5 : width of game board
     //   height = 5 : height of game board
-    //   mixedDenominators = false : whether problems can have mixed denominators in the fractional part.
+    //   commonDenominators = true : whether problems have the same denominators in the fractional part.
     //   maxDenominator = 12 : largest fraction denominator
     //   maxWhole = 9 : largest whole number component
     //   operators = ['+', '-'] : Set of allowed arithmetic operators
     //   seed = str : Random number generator seed.
     // }
-    constructor(options) {      
+    constructor(options) {
         // Parse game options
         this.width = options?.width || 5;
         this.height = options?.height || 5;
-        
-        this.mixedDenominators = options?.mixedDenominators || false;
+
+        this.commonDenominators = options?.commonDenominators;
+        if (this.commonDenominators === undefined)
+            this.commonDenominators = true;
         this.maxDenominator = options?.maxDenominator || 12;
         this.maxWhole = options?.maxWhole || 9;
         this.operators = options?.operators || ['+', '-'];
         this.seed = options?.seed || Random.randomSeed();
         this.random = new Random(this.seed);
-        
+
         // 3D array: player.row.column.
         this.questions = []
 
@@ -350,30 +352,30 @@ class Game {
             }
         }
     }
-    
+
     // internal utility to generate a new question
     genquestion() {
         const randrange = this.random.randrange.bind(this.random);
-        
+
         let lhs, rhs, op;
         do {
             const lhd = randrange(1, this.maxDenominator + 1);
-            const rhd = this.mixedDenominators ? randrange(1, this.maxDenominator + 1) : lhd;
+            const rhd = !this.commonDenominators ? randrange(1, this.maxDenominator + 1) : lhd;
             const lhn = randrange(0, lhd);
             const rhn = randrange(0, rhd);
             const lhw = randrange(0, this.maxWhole + 1);
             const rhw = randrange(0, this.maxWhole + 1);
-        
+
             lhs = Rational.fromMixed(lhw, lhn, lhd);
             rhs = Rational.fromMixed(rhw, rhn, rhd);
-        
-            if (this.mixedDenominators) {
+
+            if (!this.commonDenominators) {
                 lhs = lhs.simplified();
                 rhs = rhs.simplified();
             }
-        
+
             op = this.operators[randrange(0, this.operators.length)];
-        
+
             if (op == '-' && lhs.lessThan(rhs)) {
                 // avoid negative results
                 let tmp = lhs;
@@ -382,10 +384,10 @@ class Game {
             }
         // respin if both numbers are non-mixed fractions or if either number is exactly zero
         } while (lhs.isIntegral() && rhs.isIntegral() || lhs.numerator == 0 || rhs.numerator == 0)
-                
+
         return new BinaryExpression(lhs, makeop(op), rhs);
     }
-    
+
     // output html to the page
     writeHTML() {
         for (let player = 0; player < 2; player++) {
@@ -394,39 +396,39 @@ class Game {
             // be used to group them back together.
             const seed = document.getElementById(`p${player+1}.seed`);
             seed.innerText = this.random.seed;
-        
+
             // Get the HTML element containing the top half of this player's page.
             // This is where the player will place their battleships and where
             // the answers for the opposing player will be.
             const ocean = document.getElementById(`p${player+1}.ocean`);
-            
+
             // Clear the ocean
             ocean.innerHTML = '';
-            
+
             // Write the answers
             const answers = this.questions[(player + 1) % 2];
             ocean.append(this.makeTable(answers.map(row => row.map(cell => cell.evaluate()))))
-            
+
             // Get the HTML element containing the bottom half of this player's page.
             // This is where the player will choose which cells to target in their
             // opponents ocean, and it contains the problems they must solve in order
             // to fire on their opponent.
             const radar = document.getElementById(`p${player+1}.radar`);
-            
+
             // Clear the radar
             radar.innerHTML = '';
-            
+
             // Write the questions
             const questions = this.questions[player];
             radar.append(this.makeTable(questions));
         }
     }
-    
+
     // internal utility to generate a table of questions or answers
     // grid - a 2D [width][height] array of either BinaryExpressions (questions) or Rationals (answers)
     makeTable(grid) {
         const table = h('table');
-        
+
         // write a header row of letters
         let header = h('tr');
         table.append(header);
@@ -437,7 +439,7 @@ class Game {
             th.innerText = alpha[col];
             header.append(th);
         }
-        
+
         // write each row and column
         for (let row = 0; row < this.height; row++) {
             let tr = h('tr');
@@ -451,7 +453,7 @@ class Game {
                 tr.append(td);
             }
         }
-        
+
         return table;
     }
 }
@@ -459,16 +461,18 @@ class Game {
 function makeGame() {
     const add = document.getElementById('addition').checked;
     const sub = document.getElementById('subtraction').checked;
-    
+
     const ops = [];
     if (add) ops.push('+')
     if (sub) ops.push('-')
     if (ops.length == 0) ops.push('+')
-    
+
     const size = parseInt(document.getElementById('size').value);
-    
+
+    const commonDenominators = document.getElementById('commonDenominators');
+
     const options = {
-        mixedDenominators: document.getElementById('mixedDenominators').checked,
+        commonDenominators: commonDenominators.checked,
         maxDenominator: parseInt(document.getElementById('maxDenominator').value),
         operators: ops,
         width: size,
