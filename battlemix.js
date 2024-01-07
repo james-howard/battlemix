@@ -300,9 +300,6 @@ class Random {
     }
 }
 
-// return a random number between min (inclusive) and max (exclusive)
-
-
 // Convert an operator named like '+' or '-' to its BinaryOperator class.
 function makeop(opname) {
     switch (opname) {
